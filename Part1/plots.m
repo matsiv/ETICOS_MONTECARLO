@@ -1,6 +1,5 @@
 clear all
 close all
-
 c_light = 2.99792458e+8; % light velocity, m/s
 H = 6.626070040e-34; % Planck constant, J*s
 HBAR = 1.054D-34; % reduced Planck constant, J*s
@@ -24,23 +23,42 @@ x = sym('x','real');
 
 nE = 200; % number of energy points
 vE = linspace(0,1,nE)*Q; % energy axis, J
-T=300;
+T = [30,77,150,300,600];
+Waco_list_emi = containers.Map({[1]}, {[1,1]}); %creates a dictionary for != T values
+Waco_list_emi.remove(1) %remove the initialization
+Waco_list_abs = containers.Map({[1]}, {[1,1]}); %creates a dictionary for != T values
+Waco_list_abs.remove(1) %remove the initialization
+for Ti = T
 for ie = 1:nE 
-    E = vE(ie);
-    [Waco_emi300(ie), Waco_abs300(ie)] = aco_scat(E,T); 
+    E = vE(ie); %loops over the points in the linespace
+    [Waco_emi(ie), Waco_abs(ie)] = aco_scat(E,Ti); %returns the absorption and emission rates
+    Waco_list_emi(Ti) = Waco_emi;
+    Waco_list_abs(Ti) = Waco_abs;
 end
-
-T=77;
-for ie = 1:nE 
-    E = vE(ie);
-    [Waco_emi77(ie), Waco_abs77(ie)] = aco_scat(E,T); 
 end
 
 figure(1)
-semilogy(vE/Q,Waco_emi300,'r-',vE/Q,Waco_abs300,'b-',vE/Q,Waco_emi300+Waco_abs300,'k-',vE/Q,Waco_emi77,'r--',vE/Q,Waco_abs77,'b--',vE/Q,Waco_emi77+Waco_abs77,'k--')
+semilogy(vE/Q,Waco_list_emi(300),'r-',vE/Q,Waco_list_abs(300),'b-',vE/Q,Waco_list_emi(300)+Waco_list_abs(300),'k-',vE/Q,Waco_list_emi(77),'r--',vE/Q,Waco_list_abs(77),'b--',vE/Q,Waco_list_emi(77)+Waco_list_abs(77),'k--')
 set(gca,'FontSize',14,'FontName','Arial','box','on')
 grid
+title("Acoustic scattering rate, no elastic approx")
+legend('emission at 300K','absorption at 300K','total at 300K', 'emission at 77K', 'absorption at 77K','total at 77K');
+figure(2)
+Color ={"k","b","m","r","g"}
+hold on
+counter = 0;
+for Ti = flip(T)
+    col = [Color{mod(counter,5)+1}]
+    counter = counter + 1;
+plot(vE/Q,Waco_list_emi(Ti)+Waco_list_abs(Ti),col+"-",'DisplayName','Total at ' + string(Ti) + 'K')
+%plot(vE/Q,Waco_list_emi(Ti),col+'--','DisplayName','Emission at' + string(Ti) + 'K')
+%plot(vE/Q,Waco_list_abs(Ti),col + '-.','DisplayName','Absorption at  ' + string(Ti) + 'K')
+
+end
+set(gca,'FontSize',14,'FontName','Arial','box','on','Yscale','log')
+grid
+title("Acoustic scattering rate, no elastic approx")
+
 ylabel('Acoustic scattering rate, 1/s')
 xlabel('Energy, eV')
-legend('emission at 300K','absorption at 300K','total at 300K', 'emission at 77K', 'absorption at 77K','total at 77K');
-% 
+legend('show');
